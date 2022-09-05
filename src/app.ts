@@ -1,7 +1,43 @@
 import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+
+import placesRoutes from './routes/places-routes';
+
+dotenv.config();
 
 const app = express();
 
-console.log('Hello World!');
+app.use(bodyParser.json());
 
-app.listen(8080);
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    next();
+});
+
+app.use('/places', placesRoutes);
+
+app.use((err: any, _req: any, res: any, _next: any) => {
+    const statusCode = err.statusCode || 500;
+
+    res.status(statusCode).json({
+        msg: err.message,
+    });
+});
+
+mongoose
+    .connect(process.env.MONGODB_CONNECTION_URI as string, {
+        user: process.env.MONGODB_CONNECTION_USERNAME,
+        pass: process.env.MONGODB_CONNECTION_PASSWORD,
+        // autoIndex: false, // should be added on production
+    })
+    .then(() => {
+        app.listen(8080);
+    })
+    .catch((error) => {
+        console.log(error);
+    });
