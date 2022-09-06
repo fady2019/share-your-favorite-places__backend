@@ -2,7 +2,10 @@ import { NextFunction, Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 
 import Place from '../models/place-model';
-import { PlaceI } from '../models/interfaces';
+import ResponseError from '../models/response-error';
+import { PlaceI, PlaceLocationI } from '../models/interfaces';
+import { getLocationForAddress } from '../utilities/location-utility';
+import { inputValidationResult } from '../utilities/input-validation-result-utility';
 
 export const getUserPLaces = (
     req: Request<{ userId: string }>,
@@ -18,7 +21,7 @@ export const getPlace = (req: Request<{ placeId: string }>, res: Response, next:
     Place.findById(placeId)
         .then((place) => {
             if (!place) {
-                throw new CustomError("the place isn't found!", 404);
+                throw new ResponseError('the place not found!', 404);
             }
 
             res.status(200).json({
@@ -29,21 +32,33 @@ export const getPlace = (req: Request<{ placeId: string }>, res: Response, next:
         .catch((error) => next(error));
 };
 
-export const createPlace = (req: Request<any, any, PlaceI>, res: Response, next: NextFunction) => {
-    const validation = validationResult(req);
-
-    if (!validation.isEmpty()) {
-        return res.status(422).json({
-            message: validation.array().at(0)?.msg,
-        });
+export const createPlace = async (
+    req: Request<any, any, PlaceI>,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // it will throw an error if there any invalid field
+        inputValidationResult(req);
+    } catch (error) {
+        return next(error);
     }
 
     const { address, description, title } = req.body;
+
+    let location: PlaceLocationI;
+
+    try {
+        location = await getLocationForAddress(address);
+    } catch (error) {
+        return next(error);
+    }
 
     const place = new Place({
         title,
         address,
         description,
+        location,
     });
 
     place
@@ -57,29 +72,46 @@ export const createPlace = (req: Request<any, any, PlaceI>, res: Response, next:
         .catch((error) => next(error));
 };
 
-export const updatePlace = (
+export const updatePlace = async (
     req: Request<{ placeId: string }, any, PlaceI>,
     res: Response,
     next: NextFunction
 ) => {
+    try {
+        // it will throw an error if there any invalid field
+        inputValidationResult(req);
+    } catch (error) {
+        return next(error);
+    }
+
     const { placeId } = req.params;
     const { address, description, title } = req.body;
+
+    let location: PlaceLocationI;
+
+    try {
+        location = await getLocationForAddress(address);
+    } catch (error) {
+        return next(error);
+    }
 
     Place.findById(placeId)
         .then((place) => {
             if (!place) {
-                throw new CustomError("the place isn't found!", 404);
+                throw new ResponseError('the place not found!', 404);
             }
 
             place.title = title;
             place.description = description;
             place.address = address;
+            place.location = location;
 
             return place.save();
         })
         .then((place) => {
-            res.status(204).json({
+            res.status(200).json({
                 message: 'place updated successfully!',
+                place
             });
         })
         .catch((error) => next(error));
@@ -95,13 +127,13 @@ export const deletePLace = (
     Place.findById(placeId)
         .then((place) => {
             if (!place) {
-                throw new CustomError("the place isn't found!", 404);
+                throw new ResponseError('the place not found!', 404);
             }
 
             return place.delete();
         })
         .then(() => {
-            res.status(204).json({
+            res.status(200).json({
                 message: 'place deleted successfully!',
             });
         })

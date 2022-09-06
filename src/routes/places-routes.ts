@@ -26,7 +26,7 @@ router.get('/:placeId', getPlace);
 
 // PATCH /places/:placeId
 // update the place with id = placeId
-router.patch('/:placeId', updatePlace);
+router.patch('/:placeId', placeValidator, updatePlace);
 
 // DELETE places/:placeId
 // delete the place with id = placeId

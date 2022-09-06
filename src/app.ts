@@ -4,6 +4,8 @@ import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 
 import placesRoutes from './routes/places-routes';
+import usersRoutes from './routes/users-routes';
+import ResponseError from './models/response-error';
 
 dotenv.config();
 
@@ -21,11 +23,19 @@ app.use((req, res, next) => {
 
 app.use('/places', placesRoutes);
 
+app.use('/users', usersRoutes);
+
+// not found route
+app.use((req, res, next) => {
+    throw new ResponseError(`'${req.url}' route not found!`, 404);
+});
+
 app.use((err: any, _req: any, res: any, _next: any) => {
+    const message = err.message || 'an unknown error have been occurred!';
     const statusCode = err.statusCode || 500;
 
     res.status(statusCode).json({
-        msg: err.message,
+        message,
     });
 });
 
