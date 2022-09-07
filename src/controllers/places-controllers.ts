@@ -1,18 +1,23 @@
 import { NextFunction, Request, Response } from 'express';
-import { validationResult } from 'express-validator';
 
+import User from '../models/user-model';
 import Place from '../models/place-model';
 import ResponseError from '../models/response-error';
-import { PlaceI, PlaceLocationI } from '../models/interfaces';
+import { PlaceI, PlaceLocationI } from '../models/place-interfaces';
 import { getLocationForAddress } from '../utilities/location-utility';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 
-export const getUserPLaces = (
-    req: Request<{ userId: string }>,
-    res: Response,
-    next: NextFunction
-) => {
+export const getUserPLaces = (req: Request<{ userId: string }>, res: Response, next: NextFunction) => {
     const { userId } = req.params;
+
+    User.getUserPlaces(userId)
+        .then((places) => {
+            res.status(200).json({
+                message: 'user places fetched successfully!',
+                places: places.map((place) => place.toObject()),
+            });
+        })
+        .catch((error) => next(error));
 };
 
 export const getPlace = (req: Request<{ placeId: string }>, res: Response, next: NextFunction) => {
@@ -26,17 +31,13 @@ export const getPlace = (req: Request<{ placeId: string }>, res: Response, next:
 
             res.status(200).json({
                 message: 'place fetched successfully!',
-                place,
+                place: place.toObject(),
             });
         })
         .catch((error) => next(error));
 };
 
-export const createPlace = async (
-    req: Request<any, any, PlaceI>,
-    res: Response,
-    next: NextFunction
-) => {
+export const createPlace = async (req: Request<any, any, PlaceI>, res: Response, next: NextFunction) => {
     try {
         // it will throw an error if there any invalid field
         inputValidationResult(req);
@@ -44,7 +45,7 @@ export const createPlace = async (
         return next(error);
     }
 
-    const { address, description, title } = req.body;
+    const { address } = req.body;
 
     let location: PlaceLocationI;
 
@@ -54,15 +55,10 @@ export const createPlace = async (
         return next(error);
     }
 
-    const place = new Place({
-        title,
-        address,
-        description,
-        location,
-    });
+    const place = new Place({ ...req.body, location });
 
     place
-        .save()
+        .add()
         .then((place) => {
             res.status(201).json({
                 message: 'place created successfully!',
@@ -72,11 +68,7 @@ export const createPlace = async (
         .catch((error) => next(error));
 };
 
-export const updatePlace = async (
-    req: Request<{ placeId: string }, any, PlaceI>,
-    res: Response,
-    next: NextFunction
-) => {
+export const updatePlace = async (req: Request<{ placeId: string }, any, PlaceI>, res: Response, next: NextFunction) => {
     try {
         // it will throw an error if there any invalid field
         inputValidationResult(req);
@@ -111,17 +103,13 @@ export const updatePlace = async (
         .then((place) => {
             res.status(200).json({
                 message: 'place updated successfully!',
-                place
+                place: place.toObject(),
             });
         })
         .catch((error) => next(error));
 };
 
-export const deletePLace = (
-    req: Request<{ placeId: string }>,
-    res: Response,
-    next: NextFunction
-) => {
+export const deletePLace = (req: Request<{ placeId: string }>, res: Response, next: NextFunction) => {
     const { placeId } = req.params;
 
     Place.findById(placeId)
@@ -130,7 +118,7 @@ export const deletePLace = (
                 throw new ResponseError('the place not found!', 404);
             }
 
-            return place.delete();
+            return place.rmv(); // rmv => remove
         })
         .then(() => {
             res.status(200).json({
