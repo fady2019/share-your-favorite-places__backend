@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { PlaceLocationI } from '../models/interfaces';
+import { PlaceLocationI } from '../models/place-interfaces';
 import ResponseError from '../models/response-error';
 
 export const getLocationForAddress = async (address: string): Promise<PlaceLocationI> => {
