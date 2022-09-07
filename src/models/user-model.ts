@@ -1,17 +1,28 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 import ResponseError from './response-error';
+import { UserSchemaI, UserDocMethodsI, UserDocStaticsI } from './user-interfaces';
 
-const userSchema = new Schema<any, any, { signup: () => Promise<any>; login: () => Promise<any> }>({
-    name: String,
-    imgURL: String,
-    email: String,
-    password: String,
-});
+const userSchema = new Schema<UserSchemaI, Model<UserSchemaI>, UserDocMethodsI, {}, {}, UserDocStaticsI>(
+    {
+        name: { type: String, required: true },
+        imgURL: { type: String, required: true },
+        email: { type: String, required: true, unique: true },
+        password: { type: String, required: true },
+        places: {
+            type: [{ type: Schema.Types.ObjectId, ref: 'Place' }],
+            default: [],
+        },
+    },
+    {
+        toObject: { getters: true },
+    }
+);
 
+/// METHODS
 userSchema.methods.signup = async function () {
-    const user = await User.findOne({ email: this.email });
+    let user = await User.findOne({ email: this.email });
 
     // check if email exists already
     if (user) {
@@ -20,11 +31,15 @@ userSchema.methods.signup = async function () {
 
     this.password = await bcrypt.hash(this.password as string, 12);
 
-    return this.save();
+    await this.save();
+
+    user = await User.findOne({ email: this.email }).select('-password').exec();
+
+    return user!.toObject();
 };
 
 userSchema.methods.login = async function () {
-    const user = await User.findOne({ email: this.email });
+    let user = await User.findOne({ email: this.email });
 
     // check if email not exists
     if (!user) {
@@ -37,7 +52,39 @@ userSchema.methods.login = async function () {
         throw new ResponseError('incorrect user password!', 401);
     }
 
-    return user;
+    user = await User.findOne({ email: this.email }).select('-password').exec();
+
+    return user!.toObject();
+};
+
+userSchema.methods.addPlace = async function (place) {
+    await this.updateOne({
+        $push: {
+            places: place._id,
+        },
+    });
+};
+
+userSchema.methods.deletePlace = async function (place) {
+    console.log(place._id.toString());
+    await this.updateOne({
+        $pull: {
+            places: place._id,
+        },
+    });
+};
+
+/// STATICS
+userSchema.statics.getUserPlaces = async function (userId) {
+    const user = await this.findById(userId).populate('places').exec();
+
+    if (!user) {
+        throw new ResponseError("there's no user with the entered id!", 404);
+    }
+
+    const places = user.places;
+
+    return places;
 };
 
 const User = model('User', userSchema);
