@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
@@ -13,10 +14,12 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+app.use('/media', express.static(path.join(__dirname, '..', path.sep, 'media')));
+
+app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', process.env.ACCESS_CONTROL_ALLOW_ORIGIN as string);
+    res.setHeader('Access-Control-Allow-Methods', process.env.ACCESS_CONTROL_ALLOW_METHODS as string);
+    res.setHeader('Access-Control-Allow-Headers', process.env.ACCESS_CONTROL_ALLOW_HEADERS as string);
 
     next();
 });
@@ -26,7 +29,7 @@ app.use('/places', placesRoutes);
 app.use('/users', usersRoutes);
 
 // not found route
-app.use((req, res, next) => {
+app.use((req, _res, _next) => {
     throw new ResponseError(`'${req.url}' route not found!`, 404);
 });
 
