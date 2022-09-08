@@ -16,6 +16,7 @@ const userSchema = new Schema<UserSchemaI, Model<UserSchemaI>, UserDocMethodsI, 
         },
     },
     {
+        timestamps: true,
         toObject: { getters: true },
     }
 );
