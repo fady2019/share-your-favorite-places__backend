@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 
 import Place from './place-model';
 import ResponseError from './response-error';
-import { UserSchemaI, UserDocMethodsI, UserDocStaticsI } from './user-interfaces';
+import { UserSchemaI, UserDocMethodsI, UserDocStaticsI, UserDocT } from './user-interfaces';
 
 const userSchema = new Schema<UserSchemaI, Model<UserSchemaI>, UserDocMethodsI, {}, {}, UserDocStaticsI>(
     {
@@ -18,7 +18,14 @@ const userSchema = new Schema<UserSchemaI, Model<UserSchemaI>, UserDocMethodsI, 
     },
     {
         timestamps: true,
-        toObject: { getters: true },
+        toObject: { getters: true, virtuals: true },
+        virtuals: {
+            placeCount: {
+                get(this: UserDocT): number {
+                    return this.places.length;
+                },
+            },
+        },
     }
 );
 

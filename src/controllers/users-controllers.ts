@@ -6,12 +6,12 @@ import { inputValidationResult } from '../utilities/input-validation-result-util
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
     User.find()
-        .select('name imgURL _id')
+        .select('name imgURL places _id')
         .exec()
         .then((users) => {
             res.status(200).json({
                 message: 'users fetched successfully!',
-                users: users.map((user) => user.toObject()),
+                users: users.map((user) => ({ ...user.toObject(), places: undefined })),
             });
         })
         .catch((error) => next(error));
