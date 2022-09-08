@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import User from '../models/user-model';
-import { UserAuthI, UserChangeEmailI, UserChangePasswordI, UserDeleteAccount } from '../models/user-interfaces';
+import { UserAuthI, UserChangeEmailI, UserChangeNameI, UserChangePasswordI, UserDeleteAccount } from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
@@ -93,6 +93,23 @@ export const changePassword = (req: Request<{ userId: string }, any, UserChangeP
         .then((user) => {
             res.status(200).json({
                 message: 'user password changed successfully!',
+                user,
+            });
+        })
+        .catch((error) => next(error));
+};
+
+export const changeName = (req: Request<{ userId: string }, any, UserChangeNameI>, res: Response, next: NextFunction) => {
+    // it will throw an error if there any invalid field
+    inputValidationResult(req);
+
+    const { userId } = req.params;
+    const { name } = req.body;
+
+    User.changeUserName(userId, name)
+        .then((user) => {
+            res.status(200).json({
+                message: 'user name changed successfully!',
                 user,
             });
         })

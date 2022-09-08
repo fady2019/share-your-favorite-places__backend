@@ -140,6 +140,25 @@ userSchema.statics.changeUserPassword = async function (userId, password, newPas
     return user!.toObject({ virtuals: ['id'] });
 };
 
+userSchema.statics.changeUserName = async function (userId, name) {
+    // it throws error if userId can't be converted to ObjectId
+    const _id = castToObjectId(userId);
+
+    let user = await User.findById(_id).exec();
+
+    if (!user) {
+        throw new ResponseError("there's no user with the entered id!", 404);
+    }
+
+    user.name = name;
+
+    await user.save();
+
+    user = await User.findById(_id).select('-password -places').exec();
+
+    return user!.toObject({ virtuals: ['id'] });
+};
+
 userSchema.statics.getUserPlaces = async function (userId) {
     const user = await this.findById(userId).populate('places').exec();
 

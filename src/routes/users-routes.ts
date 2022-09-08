@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
-import { changeEmail, changePassword, deleteAccount, getUsers, postLogin, postSignup } from '../controllers/users-controllers';
-import { userChangeEmailValidator, userChangePasswordValidator, userSignupValidator } from '../validators/user-validator';
+import { changeEmail, changeName, changePassword, deleteAccount, getUsers, postLogin, postSignup } from '../controllers/users-controllers';
+import { userChangeEmailValidator, userChangeNameValidator, userChangePasswordValidator, userSignupValidator } from '../validators/user-validator';
 
 const router = Router();
 
@@ -24,6 +24,10 @@ router.patch('/change/email/:userId', userChangeEmailValidator, changeEmail);
 //PARCH /users/change/password/:userId
 // change user password (password and new password are required)
 router.patch('/change/password/:userId', userChangePasswordValidator, changePassword);
+
+// PATCH /users/change/name/:userId
+// change user name
+router.patch('/change/name/:userId', userChangeNameValidator, changeName);
 
 // POST /users/delete/:userId
 // delete a user account
