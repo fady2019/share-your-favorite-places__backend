@@ -7,6 +7,20 @@ export interface UserAuthI {
     password: string;
 }
 
+export interface UserChangeEmailI {
+    newEmail: string;
+    password: string;
+}
+
+export interface UserChangePasswordI {
+    newPassword: string;
+    password: string;
+}
+
+export interface UserDeleteAccount {
+    password: string;
+}
+
 export interface UserSchemaI extends UserAuthI {
     imgURL: string;
     places: [Types.ObjectId];
@@ -27,6 +41,8 @@ export interface UserDocMethodsI {
 }
 
 export interface UserDocStaticsI {
+    changeUserEmail: (this: UserModelT, userId: Types.ObjectId | string, password: string, newEmail: string) => Promise<any>;
+    changeUserPassword: (this: UserModelT, userId: Types.ObjectId | string, password: string, newPassword: string) => Promise<any>;
     getUserPlaces: (this: UserModelT, userId: Types.ObjectId | string) => Promise<[any]>;
     deleteUser: (this: UserModelT, userId: Types.ObjectId | string, password: string) => Promise<any>;
 }
