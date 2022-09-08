@@ -20,6 +20,8 @@ const passwordValidator = (field: string) =>
 
 export const userSignupValidator = [nameValidator('name'), emailValidator('email'), passwordValidator('password')];
 
+export const userChangeNameValidator = [nameValidator('name')];
+
 export const userChangeEmailValidator = [emailValidator('newEmail')];
 
 export const userChangePasswordValidator = [passwordValidator('newPassword')];
