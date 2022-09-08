@@ -66,7 +66,6 @@ userSchema.methods.addPlace = async function (place) {
 };
 
 userSchema.methods.deletePlace = async function (place) {
-    console.log(place._id.toString());
     await this.updateOne({
         $pull: {
             places: place._id,
