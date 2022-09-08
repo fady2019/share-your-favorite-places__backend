@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import User from '../models/user-model';
-import { UserAuthI } from '../models/user-interfaces';
+import { UserAuthI, UserChangeEmailI, UserChangePasswordI, UserDeleteAccount } from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +52,7 @@ export const postLogin = (req: Request<any, any, UserAuthI>, res: Response, next
         .catch((error) => next(error));
 };
 
-export const deleteAccount = (req: Request<{ userId: string }, any, { password: string }>, res: Response, next: NextFunction) => {
+export const deleteAccount = (req: Request<{ userId: string }, any, UserDeleteAccount>, res: Response, next: NextFunction) => {
     const { userId } = req.params;
     const { password } = req.body;
 
@@ -60,6 +60,40 @@ export const deleteAccount = (req: Request<{ userId: string }, any, { password: 
         .then(() => {
             res.status(200).json({
                 message: 'user account deleted successfully!',
+            });
+        })
+        .catch((error) => next(error));
+};
+
+export const changeEmail = (req: Request<{ userId: string }, any, UserChangeEmailI>, res: Response, next: NextFunction) => {
+    // it will throw an error if there any invalid field
+    inputValidationResult(req);
+
+    const { userId } = req.params;
+    const { newEmail, password } = req.body;
+
+    User.changeUserEmail(userId, password, newEmail)
+        .then((user) => {
+            res.status(200).json({
+                message: 'user email changed successfully!',
+                user,
+            });
+        })
+        .catch((error) => next(error));
+};
+
+export const changePassword = (req: Request<{ userId: string }, any, UserChangePasswordI>, res: Response, next: NextFunction) => {
+    // it will throw an error if there any invalid field
+    inputValidationResult(req);
+
+    const { userId } = req.params;
+    const { newPassword, password } = req.body;
+
+    User.changeUserPassword(userId, password, newPassword)
+        .then((user) => {
+            res.status(200).json({
+                message: 'user password changed successfully!',
+                user,
             });
         })
         .catch((error) => next(error));

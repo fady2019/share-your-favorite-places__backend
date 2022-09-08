@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import Place from './place-model';
 import ResponseError from './response-error';
 import { UserSchemaI, UserDocMethodsI, UserDocStaticsI, UserDocT } from './user-interfaces';
+import { castToObjectId } from '../utilities/id-caster-utility';
 
 const userSchema = new Schema<UserSchemaI, Model<UserSchemaI>, UserDocMethodsI, {}, {}, UserDocStaticsI>(
     {
@@ -42,9 +43,9 @@ userSchema.methods.signup = async function () {
 
     await this.save();
 
-    user = await User.findOne({ email: this.email }).select('-password').exec();
+    user = await User.findOne({ email: this.email }).select('-password -places').exec();
 
-    return user!.toObject();
+    return user!.toObject({ virtuals: ['id'] });
 };
 
 userSchema.methods.login = async function () {
@@ -61,9 +62,9 @@ userSchema.methods.login = async function () {
         throw new ResponseError('incorrect user password!', 401);
     }
 
-    user = await User.findOne({ email: this.email }).select('-password').exec();
+    user = await User.findOne({ email: this.email }).select('-password -places').exec();
 
-    return user!.toObject();
+    return user!.toObject({ virtuals: ['id'] });
 };
 
 userSchema.methods.addPlace = async function (place) {
@@ -83,6 +84,62 @@ userSchema.methods.deletePlace = async function (place) {
 };
 
 /// STATICS
+userSchema.statics.changeUserEmail = async function (userId, password, newEmail) {
+    // it throws error if userId can't be converted to ObjectId
+    const _id = castToObjectId(userId);
+
+    let user = await User.findOne({ email: newEmail }).exec();
+
+    if (user) {
+        throw new ResponseError('user email already exists!', 409);
+    }
+
+    user = await User.findById(_id).exec();
+
+    if (!user) {
+        throw new ResponseError("there's no user with the entered id!", 404);
+    }
+
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
+
+    if (!isCorrectPassword) {
+        throw new ResponseError('incorrect user password!', 401);
+    }
+
+    user.email = newEmail;
+
+    await user.save();
+
+    user = await User.findById(_id).select('-password -places').exec();
+
+    return user!.toObject({ virtuals: ['id'] });
+};
+
+userSchema.statics.changeUserPassword = async function (userId, password, newPassword) {
+    // it throws error if userId can't be converted to ObjectId
+    const _id = castToObjectId(userId);
+
+    let user = await User.findById(_id).exec();
+
+    if (!user) {
+        throw new ResponseError("there's no user with the entered id!", 404);
+    }
+
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
+
+    if (!isCorrectPassword) {
+        throw new ResponseError('incorrect user password!', 401);
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+
+    await user.save();
+
+    user = await User.findById(_id).select('-password -places').exec();
+
+    return user!.toObject({ virtuals: ['id'] });
+};
+
 userSchema.statics.getUserPlaces = async function (userId) {
     const user = await this.findById(userId).populate('places').exec();
 
@@ -96,13 +153,8 @@ userSchema.statics.getUserPlaces = async function (userId) {
 };
 
 userSchema.statics.deleteUser = async function (userId, password) {
-    let _id: Types.ObjectId;
-
-    try {
-        _id = new Types.ObjectId(userId);
-    } catch (error) {
-        throw new ResponseError('invalid user id!', 422);
-    }
+    // it throws error if userId can't be converted to ObjectId
+    const _id = castToObjectId(userId);
 
     const user = await User.findById(_id).exec();
 
