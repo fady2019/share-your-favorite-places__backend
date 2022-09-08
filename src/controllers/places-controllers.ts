@@ -14,7 +14,7 @@ export const getUserPLaces = (req: Request<{ userId: string }>, res: Response, n
         .then((places) => {
             res.status(200).json({
                 message: 'user places fetched successfully!',
-                places: places.map((place) => place.toObject()),
+                places: places.map((place) => place.toObject({ virtuals: ['placeCount', 'id'] })),
             });
         })
         .catch((error) => next(error));
