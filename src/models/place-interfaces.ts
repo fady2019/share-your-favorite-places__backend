@@ -1,4 +1,4 @@
-import { Document, FlatRecord, Types } from 'mongoose';
+import { ClientSession, Document, FlatRecord, Model, Types } from 'mongoose';
 
 export interface PlaceI {
     title: string;
@@ -22,7 +22,13 @@ export type PlaceDocT = Document<unknown, any, FlatRecord<PlaceSchemaI>> &
         _id: Types.ObjectId;
     };
 
+export type PLaceModelT = Model<FlatRecord<PlaceSchemaI>, {}, {}, {}, any>;
+
 export interface PlaceDocMethodsI {
     add: (this: PlaceDocT) => Promise<any>;
     rmv: (this: PlaceDocT) => Promise<any>;
+}
+
+export interface PlaceDocStaticsI {
+    deleteUserPlaces: (this: PLaceModelT, userId: Types.ObjectId | string, session: ClientSession) => Promise<any>;
 }

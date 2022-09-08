@@ -51,3 +51,16 @@ export const postLogin = (req: Request<any, any, UserAuthI>, res: Response, next
         })
         .catch((error) => next(error));
 };
+
+export const deleteAccount = (req: Request<{ userId: string }, any, { password: string }>, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const { password } = req.body;
+
+    User.deleteUser(userId, password)
+        .then(() => {
+            res.status(200).json({
+                message: 'user account deleted successfully!',
+            });
+        })
+        .catch((error) => next(error));
+};

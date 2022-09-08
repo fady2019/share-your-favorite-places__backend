@@ -28,4 +28,5 @@ export interface UserDocMethodsI {
 
 export interface UserDocStaticsI {
     getUserPlaces: (this: UserModelT, userId: Types.ObjectId | string) => Promise<[any]>;
+    deleteUser: (this: UserModelT, userId: Types.ObjectId | string, password: string) => Promise<any>;
 }

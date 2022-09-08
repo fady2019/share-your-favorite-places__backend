@@ -1,6 +1,7 @@
-import { Schema, model, Model } from 'mongoose';
+import { Schema, model, Model, startSession, Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+import Place from './place-model';
 import ResponseError from './response-error';
 import { UserSchemaI, UserDocMethodsI, UserDocStaticsI } from './user-interfaces';
 
@@ -85,6 +86,39 @@ userSchema.statics.getUserPlaces = async function (userId) {
     const places = user.places;
 
     return places;
+};
+
+userSchema.statics.deleteUser = async function (userId, password) {
+    let _id: Types.ObjectId;
+
+    try {
+        _id = new Types.ObjectId(userId);
+    } catch (error) {
+        throw new ResponseError('invalid user id!', 422);
+    }
+
+    const user = await User.findById(_id).exec();
+
+    if (!user) {
+        throw new ResponseError("there's no user with the entered id!", 404);
+    }
+
+    const isCorrectPassword = await bcrypt.compare(password, user.password);
+
+    if (!isCorrectPassword) {
+        throw new ResponseError('incorrect user password!', 401);
+    }
+
+    const session = await startSession();
+    session.startTransaction();
+
+    await Place.deleteUserPlaces(_id, session);
+
+    await User.deleteOne({ _id }, { session }).exec();
+
+    await session.commitTransaction();
+
+    return null;
 };
 
 const User = model('User', userSchema);

@@ -1,10 +1,10 @@
 import { Model, model, Schema, startSession } from 'mongoose';
 
 import User from './user-model';
-import { PlaceDocMethodsI, PlaceSchemaI } from './place-interfaces';
+import { PlaceDocMethodsI, PlaceDocStaticsI, PlaceSchemaI } from './place-interfaces';
 import ResponseError from './response-error';
 
-const placeSchema = new Schema<PlaceSchemaI, Model<PlaceSchemaI>, PlaceDocMethodsI>(
+const placeSchema = new Schema<PlaceSchemaI, Model<PlaceSchemaI>, PlaceDocMethodsI, {}, {}, PlaceDocStaticsI>(
     {
         title: { type: String, required: true },
         description: { type: String, required: true },
@@ -21,6 +21,8 @@ const placeSchema = new Schema<PlaceSchemaI, Model<PlaceSchemaI>, PlaceDocMethod
         toObject: { getters: true },
     }
 );
+
+/// METHODS
 
 placeSchema.methods.add = async function () {
     const session = await startSession();
@@ -62,6 +64,14 @@ placeSchema.methods.rmv = async function () {
     await this.delete({ session });
 
     await session.commitTransaction();
+
+    return null;
+};
+
+/// STATICS
+
+placeSchema.statics.deleteUserPlaces = async function (userId, session) {
+    await Place.deleteMany({ creator: userId }, { session }).exec();
 
     return null;
 };
