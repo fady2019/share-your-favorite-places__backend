@@ -32,6 +32,12 @@ placeSchema.methods.add = async function () {
         throw new ResponseError("there's no user with the entered creator!", 404);
     }
 
+    const place = await Place.findOne({ creator: creator._id, location: this.location }, undefined, { session }).exec();
+
+    if (place) {
+        throw new ResponseError("there's already a place with the entered address!", 409);
+    }
+
     await this.save({ session });
 
     await creator.set('session', session).addPlace(this);
