@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import User from '../models/user-model';
 import { UserAuthI, UserChangeEmailI, UserChangeNameI, UserChangePasswordI, UserDeleteAccount } from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
+import { getURL } from '../utilities/path-utility';
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
     User.find()
@@ -25,7 +26,7 @@ export const postSignup = (req: Request<any, any, UserAuthI>, res: Response, nex
         return next(error);
     }
 
-    const defaultImgURL = req.protocol + '://' + req.get('host') + '/media/images/default-user-img.svg';
+    const defaultImgURL = getURL(req) + '/media/images/default-user-img.svg';
 
     const user = new User({ ...req.body, imgURL: defaultImgURL });
 
