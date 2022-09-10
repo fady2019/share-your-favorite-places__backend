@@ -3,9 +3,11 @@ import { NextFunction, Request, Response } from 'express';
 import User from '../models/user-model';
 import Place from '../models/place-model';
 import ResponseError from '../models/response-error';
-import { PlaceI, PlaceLocationI } from '../models/place-interfaces';
+import { PlaceI } from '../models/place-interfaces';
 import { getLocationForAddress } from '../utilities/location-utility';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
+import { deleteFile } from '../utilities/file-utility';
+import { getPathFromURL, getURL } from '../utilities/path-utility';
 
 export const getUserPLaces = (req: Request<{ userId: string }>, res: Response, next: NextFunction) => {
     const { userId } = req.params;
@@ -38,85 +40,103 @@ export const getPlace = (req: Request<{ placeId: string }>, res: Response, next:
 };
 
 export const createPlace = async (req: Request<any, any, PlaceI>, res: Response, next: NextFunction) => {
+    let imgPath: any;
+
     try {
+        imgPath = req.file?.path;
+
         // it will throw an error if there any invalid field
         inputValidationResult(req);
+
+        if (!imgPath) {
+            throw new ResponseError('place image is required!', 422);
+        }
+
+        const { address } = req.body;
+        const location = await getLocationForAddress(address); 
+        const imgURL = getURL(req) + imgPath;
+
+        const place = new Place({ ...req.body, location, imgURL });
+
+        const addedPlace = await place.add();
+
+        res.status(201).json({
+            message: 'place created successfully!',
+            place: addedPlace,
+        });
     } catch (error) {
-        return next(error);
+        next(error);
+
+        if (imgPath) {
+            deleteFile(imgPath);
+        }
     }
-
-    const { address } = req.body;
-
-    let location: PlaceLocationI;
-
-    try {
-        location = await getLocationForAddress(address);
-    } catch (error) {
-        return next(error);
-    }
-
-    const place = new Place({ ...req.body, location });
-
-    place
-        .add()
-        .then((place) => {
-            res.status(201).json({
-                message: 'place created successfully!',
-                place,
-            });
-        })
-        .catch((error) => next(error));
 };
 
-export const updatePlace = async (req: Request<{ placeId: string }, any, PlaceI>, res: Response, next: NextFunction) => {
+export const updatePlace = async (
+    req: Request<{ placeId: string }, any, PlaceI>,
+    res: Response,
+    next: NextFunction
+) => {
+    let newImgPath: any;
+    let crtImgPath: any;
+
     try {
+        newImgPath = req.file?.path;
+
         // it will throw an error if there any invalid field
         inputValidationResult(req);
+
+        const { placeId } = req.params;
+        const { address, description, title } = req.body;
+        let location = await getLocationForAddress(address);
+        const newImgURL = newImgPath? getURL(req) + newImgPath : '';
+
+        const place = await Place.findById(placeId);
+
+        if (!place) {
+            throw new ResponseError('the place not found!', 404);
+        }
+
+        place.title = title;
+        place.description = description;
+        place.address = address;
+        place.location = location;
+
+        if (newImgURL) {
+            crtImgPath = getPathFromURL(place.imgURL);
+            place.imgURL = newImgURL;
+        }
+
+        res.status(200).json({
+            message: 'place updated successfully!',
+            place: place.toObject(),
+        });
+
+        if (crtImgPath) {
+            getPathFromURL(place.imgURL);
+        }
     } catch (error) {
-        return next(error);
+        next(error);
+
+        if (newImgPath) {
+            deleteFile(newImgPath);
+        }
     }
-
-    const { placeId } = req.params;
-    const { address, description, title } = req.body;
-
-    let location: PlaceLocationI;
-
-    try {
-        location = await getLocationForAddress(address);
-    } catch (error) {
-        return next(error);
-    }
-
-    Place.findById(placeId)
-        .then((place) => {
-            if (!place) {
-                throw new ResponseError('the place not found!', 404);
-            }
-
-            place.title = title;
-            place.description = description;
-            place.address = address;
-            place.location = location;
-
-            return place.save();
-        })
-        .then((place) => {
-            res.status(200).json({
-                message: 'place updated successfully!',
-                place: place.toObject(),
-            });
-        })
-        .catch((error) => next(error));
 };
 
 export const deletePLace = (req: Request<{ placeId: string }>, res: Response, next: NextFunction) => {
     const { placeId } = req.params;
 
+    let imgURL: any;
+
     Place.findById(placeId)
         .then((place) => {
             if (!place) {
                 throw new ResponseError('the place not found!', 404);
             }
+
+            imgURL = getPathFromURL(place.imgURL);
 
             return place.rmv(); // rmv => remove
         })
@@ -124,6 +144,8 @@ export const deletePLace = (req: Request<{ placeId: string }>, res: Response, ne
             res.status(200).json({
                 message: 'place deleted successfully!',
             });
+
+            deleteFile(imgURL);
         })
         .catch((error) => next(error));
 };
