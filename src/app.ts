@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 
+import tokenRoutes from './routes/token-routes';
 import placesRoutes from './routes/places-routes';
 import usersRoutes from './routes/users-routes';
 import ResponseError from './models/response-error';
@@ -12,6 +13,7 @@ dotenv.config();
 
 const app = express();
 
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use('/media', express.static(path.join(__dirname, '..', path.sep, 'media')));
@@ -23,6 +25,8 @@ app.use((_req, res, next) => {
 
     next();
 });
+
+app.use('/token', tokenRoutes);
 
 app.use('/places', placesRoutes);
 
