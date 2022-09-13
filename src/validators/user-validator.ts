@@ -16,7 +16,7 @@ const passwordValidator = (field: string) =>
         .isLength({ min: 8 })
         .withMessage('user password should be at least 8 characters!')
         .isStrongPassword({ minLowercase: 1, minNumbers: 1, minSymbols: 1, minUppercase: 1 })
-        .withMessage('user password is week, enter a password contains lowercase and uppercase letters, numbers, and symbols!');
+        .withMessage('user password is weak, enter a password contains lowercase and uppercase letters, numbers, and symbols!');
 
 export const userSignupValidator = [nameValidator('name'), emailValidator('email'), passwordValidator('password')];
 
