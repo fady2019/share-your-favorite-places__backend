@@ -115,7 +115,7 @@ export const updatePlace = async (
             throw new ResponseError('the place not found!', 404);
         }
 
-        if (place.id !== creator) {
+        if (place.creator.toString() !== creator) {
             throw new ResponseError("you're not allowed to edit this place!", 403);
         }
 
@@ -129,14 +129,16 @@ export const updatePlace = async (
             place.imgURL = newImgURL;
         }
 
-        res.status(200).json({
-            message: 'place updated successfully!',
-            place: place.toObject(),
-        });
+        place.save().then((place) => {
+            res.status(200).json({
+                message: 'place updated successfully!',
+                place: place.toObject(),
+            });
 
-        if (crtImgPath) {
-            getPathFromURL(place.imgURL);
-        }
+            if (crtImgPath) {
+                deleteFile(crtImgPath);
+            }
+        });
     } catch (error) {
         next(error);
 
@@ -163,7 +165,7 @@ export const deletePLace = (req: Request<{ placeId: string }>, res: Response, ne
                 throw new ResponseError('the place not found!', 404);
             }
 
-            if (place.id !== creator) {
+            if (place.creator.toString() !== creator) {
                 throw new ResponseError("you're not allowed to delete this place!", 403);
             }
 
