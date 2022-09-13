@@ -9,10 +9,10 @@ export const imageUploader = (imgPath: string) => {
     return multer({
         storage: multer.diskStorage({
             destination(req, _file, callback) {
-                const userId = req.body.userId || req.body.creator;
+                const userId = req.user?.id;
 
                 if (!userId) {
-                    return callback(new ResponseError('user or creator id is required!', 422), '');
+                    return callback(new ResponseError('user id is required!', 422), '');
                 }
 
                 const mediaPath = path.join('media', userId, 'images', imgPath);
