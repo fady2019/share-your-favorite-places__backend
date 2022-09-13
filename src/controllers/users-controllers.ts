@@ -12,6 +12,7 @@ import {
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 import { getURL } from '../utilities/path-utility';
 import { generateToken } from '../utilities/token-utility';
+import { deleteFile } from '../utilities/file-utility';
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
     User.find()
@@ -91,15 +92,13 @@ export const deleteAccount = (
             res.status(200).json({
                 message: 'user account deleted successfully!',
             });
+
+            deleteFile('/media/' + userId);
         })
         .catch((error) => next(error));
 };
 
-export const changeEmail = (
-    req: Request<any, any, UserChangeEmailI>,
-    res: Response,
-    next: NextFunction
-) => {
+export const changeEmail = (req: Request<any, any, UserChangeEmailI>, res: Response, next: NextFunction) => {
     // it will throw an error if there any invalid field
     inputValidationResult(req);
 
@@ -147,11 +146,7 @@ export const changePassword = (
         .catch((error) => next(error));
 };
 
-export const changeName = (
-    req: Request<any, any, UserChangeNameI>,
-    res: Response,
-    next: NextFunction
-) => {
+export const changeName = (req: Request<any, any, UserChangeNameI>, res: Response, next: NextFunction) => {
     // it will throw an error if there any invalid field
     inputValidationResult(req);
 
@@ -160,7 +155,7 @@ export const changeName = (
     if (!userId) {
         throw new ResponseError("can't get user id!", 401);
     }
-    
+
     const { name } = req.body;
 
     User.changeUserName(userId, name)
