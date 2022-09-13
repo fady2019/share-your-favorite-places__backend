@@ -14,6 +14,7 @@ export interface PlaceLocationI {
 
 export interface PlaceSchemaI extends PlaceI {
     location: PlaceLocationI;
+    creator: Types.ObjectId;
 }
 
 export type PlaceDocT = Document<unknown, any, FlatRecord<PlaceSchemaI>> &
@@ -29,5 +30,9 @@ export interface PlaceDocMethodsI {
 }
 
 export interface PlaceDocStaticsI {
-    deleteUserPlaces: (this: PLaceModelT, userId: Types.ObjectId | string, session: ClientSession) => Promise<any>;
+    deleteUserPlaces: (
+        this: PLaceModelT,
+        userId: Types.ObjectId | string,
+        session: ClientSession
+    ) => Promise<any>;
 }
