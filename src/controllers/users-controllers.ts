@@ -1,9 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
 
 import User from '../models/user-model';
-import { UserAuthI, UserChangeEmailI, UserChangeNameI, UserChangePasswordI, UserDeleteAccount } from '../models/user-interfaces';
+import ResponseError from '../models/response-error';
+import {
+    UserAuthI,
+    UserChangeEmailI,
+    UserChangeNameI,
+    UserChangePasswordI,
+    UserDeleteAccount,
+} from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 import { getURL } from '../utilities/path-utility';
+import { generateToken } from '../utilities/token-utility';
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
     User.find()
@@ -32,9 +40,15 @@ export const postSignup = (req: Request<any, any, UserAuthI>, res: Response, nex
 
     user.signup()
         .then((user) => {
+            const token = generateToken({
+                id: user._id.toString(),
+                email: user.email,
+            });
+
             res.status(201).json({
                 message: 'user signed up successfully!',
                 user,
+                token,
             });
         })
         .catch((error) => next(error));
@@ -45,16 +59,31 @@ export const postLogin = (req: Request<any, any, UserAuthI>, res: Response, next
 
     user.login()
         .then((user) => {
+            const token = generateToken({
+                id: user._id.toString(),
+                email: user.email,
+            });
+
             res.status(200).json({
                 message: 'user logged in successfully!',
                 user,
+                token,
             });
         })
         .catch((error) => next(error));
 };
 
-export const deleteAccount = (req: Request<{ userId: string }, any, UserDeleteAccount>, res: Response, next: NextFunction) => {
-    const { userId } = req.params;
+export const deleteAccount = (
+    req: Request<any, any, UserDeleteAccount>,
+    res: Response,
+    next: NextFunction
+) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+        throw new ResponseError("can't get user id!", 401);
+    }
+
     const { password } = req.body;
 
     User.deleteUser(userId, password)
@@ -66,11 +95,20 @@ export const deleteAccount = (req: Request<{ userId: string }, any, UserDeleteAc
         .catch((error) => next(error));
 };
 
-export const changeEmail = (req: Request<{ userId: string }, any, UserChangeEmailI>, res: Response, next: NextFunction) => {
+export const changeEmail = (
+    req: Request<any, any, UserChangeEmailI>,
+    res: Response,
+    next: NextFunction
+) => {
     // it will throw an error if there any invalid field
     inputValidationResult(req);
 
-    const { userId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+        throw new ResponseError("can't get user id!", 401);
+    }
+
     const { newEmail, password } = req.body;
 
     User.changeUserEmail(userId, password, newEmail)
@@ -83,11 +121,20 @@ export const changeEmail = (req: Request<{ userId: string }, any, UserChangeEmai
         .catch((error) => next(error));
 };
 
-export const changePassword = (req: Request<{ userId: string }, any, UserChangePasswordI>, res: Response, next: NextFunction) => {
+export const changePassword = (
+    req: Request<any, any, UserChangePasswordI>,
+    res: Response,
+    next: NextFunction
+) => {
     // it will throw an error if there any invalid field
     inputValidationResult(req);
 
-    const { userId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+        throw new ResponseError("can't get user id!", 401);
+    }
+
     const { newPassword, password } = req.body;
 
     User.changeUserPassword(userId, password, newPassword)
@@ -100,11 +147,20 @@ export const changePassword = (req: Request<{ userId: string }, any, UserChangeP
         .catch((error) => next(error));
 };
 
-export const changeName = (req: Request<{ userId: string }, any, UserChangeNameI>, res: Response, next: NextFunction) => {
+export const changeName = (
+    req: Request<any, any, UserChangeNameI>,
+    res: Response,
+    next: NextFunction
+) => {
     // it will throw an error if there any invalid field
     inputValidationResult(req);
 
-    const { userId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+        throw new ResponseError("can't get user id!", 401);
+    }
+    
     const { name } = req.body;
 
     User.changeUserName(userId, name)
