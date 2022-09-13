@@ -5,7 +5,6 @@ export interface PlaceI {
     address: string;
     description: string;
     imgURL: string;
-    creator: Types.ObjectId | string;
 }
 
 export interface PlaceLocationI {

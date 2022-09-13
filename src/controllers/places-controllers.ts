@@ -53,10 +53,21 @@ export const createPlace = async (req: Request<any, any, PlaceI>, res: Response,
         }
 
         const { address } = req.body;
-        const location = await getLocationForAddress(address); 
+        const location = await getLocationForAddress(address);
         const imgURL = getURL(req) + imgPath;
 
-        const place = new Place({ ...req.body, location, imgURL });
+        const creator = req.user?.id;
+
+        if (!creator) {
+            throw new ResponseError("can't get place creator!", 401);
+        }
+
+        const place = new Place({
+            ...req.body,
+            location,
+            imgURL,
+            creator,
+        });
 
         const addedPlace = await place.add();
 
@@ -90,12 +101,22 @@ export const updatePlace = async (
         const { placeId } = req.params;
         const { address, description, title } = req.body;
         let location = await getLocationForAddress(address);
-        const newImgURL = newImgPath? getURL(req) + newImgPath : '';
+        const newImgURL = newImgPath ? getURL(req) + newImgPath : '';
+
+        const creator = req.user?.id;
+
+        if (!creator) {
+            throw new ResponseError("can't get place creator!", 401);
+        }
 
         const place = await Place.findById(placeId);
 
         if (!place) {
             throw new ResponseError('the place not found!', 404);
+        }
+
+        if (place.id !== creator) {
+            throw new ResponseError("you're not allowed to edit this place!", 403);
         }
 
         place.title = title;
@@ -128,12 +149,22 @@ export const updatePlace = async (
 export const deletePLace = (req: Request<{ placeId: string }>, res: Response, next: NextFunction) => {
     const { placeId } = req.params;
 
+    const creator = req.user?.id;
+
+    if (!creator) {
+        throw new ResponseError("can't get place creator!", 401);
+    }
+
     let imgURL: any;
 
     Place.findById(placeId)
         .then((place) => {
             if (!place) {
                 throw new ResponseError('the place not found!', 404);
+            }
+
+            if (place.id !== creator) {
+                throw new ResponseError("you're not allowed to delete this place!", 403);
             }
 
             imgURL = getPathFromURL(place.imgURL);
