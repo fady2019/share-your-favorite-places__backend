@@ -35,9 +35,7 @@ export const postSignup = (req: Request<any, any, UserAuthI>, res: Response, nex
         return next(error);
     }
 
-    const defaultImgURL = getURL(req) + '/media/images/default-user-img.svg';
-
-    const user = new User({ ...req.body, imgURL: defaultImgURL });
+    const user = new User({ ...req.body });
 
     user.signup()
         .then((user) => {

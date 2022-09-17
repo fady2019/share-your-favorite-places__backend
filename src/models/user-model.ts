@@ -9,7 +9,7 @@ import { castToObjectId } from '../utilities/id-caster-utility';
 const userSchema = new Schema<UserSchemaI, Model<UserSchemaI>, UserDocMethodsI, {}, {}, UserDocStaticsI>(
     {
         name: { type: String, required: true },
-        imgURL: { type: String, required: true },
+        imgURL: { type: String, required: false },
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
         places: {
