@@ -10,7 +10,7 @@ import {
     UserDeleteAccount,
 } from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
-import { getURL } from '../utilities/path-utility';
+import { getPathFromURL, getURL } from '../utilities/path-utility';
 import { generateToken } from '../utilities/token-utility';
 import { deleteFile } from '../utilities/file-utility';
 
@@ -166,4 +166,51 @@ export const changeName = (req: Request<any, any, UserChangeNameI>, res: Respons
             });
         })
         .catch((error) => next(error));
+};
+
+export const changeAvatar = (isImageRequired: boolean) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        let imgPath: any;
+
+        if (isImageRequired) {
+            imgPath = req.file?.path;
+
+            if (!imgPath) {
+                throw new ResponseError('user image is required!', 422);
+            }
+        }
+
+        const userId = req.user?.id;
+
+        if (!userId) {
+            throw new ResponseError("can't get user id!", 401);
+        }
+
+        const imgURL = imgPath ? getURL(req) + imgPath : undefined;
+
+        User.changeUserAvatar(userId, imgURL)
+            .then(([user, prevImgURL]) => {
+                res.status(200).json({
+                    message: 'user avatar changed successfully!',
+                    user,
+                });
+
+                if (!prevImgURL) {
+                    return;
+                }
+
+                const prevImgPath = getPathFromURL(prevImgURL);
+
+                if (prevImgPath) {
+                    deleteFile(prevImgPath);
+                }
+            })
+            .catch((error) => {
+                next(error);
+
+                if (imgPath) {
+                    deleteFile(imgPath);
+                }
+            });
+    };
 };
