@@ -48,6 +48,7 @@ export interface UserDocStaticsI {
     changeUserEmail: (this: UserModelT, userId: Types.ObjectId | string, password: string, newEmail: string) => Promise<any>;
     changeUserPassword: (this: UserModelT, userId: Types.ObjectId | string, password: string, newPassword: string) => Promise<any>;
     changeUserName: (this: UserModelT, userId: Types.ObjectId | string, name: string) => Promise<any>;
+    changeUserAvatar: (this: UserModelT, userId: Types.ObjectId | string, newAvatar: any) => Promise<any>;
     getUserPlaces: (this: UserModelT, userId: Types.ObjectId | string) => Promise<[any]>;
     deleteUser: (this: UserModelT, userId: Types.ObjectId | string, password: string) => Promise<any>;
 }
