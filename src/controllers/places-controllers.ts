@@ -7,7 +7,7 @@ import { PlaceI } from '../models/place-interfaces';
 import { getLocationForAddress } from '../utilities/location-utility';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 import { deleteFile } from '../utilities/file-utility';
-import { getPathFromURL, getURL } from '../utilities/path-utility';
+import { getURL } from '../utilities/path-utility';
 
 export const getUserPLaces = (req: Request<{ userId: string }>, res: Response, next: NextFunction) => {
     const { userId } = req.params;
@@ -16,7 +16,10 @@ export const getUserPLaces = (req: Request<{ userId: string }>, res: Response, n
         .then((places) => {
             res.status(200).json({
                 message: 'user places fetched successfully!',
-                places: places.map((place) => place.toObject({ virtuals: ['placeCount', 'id'] })),
+                places: places.map((place) => ({
+                    ...place.toObject({ virtuals: ['placeCount', 'id'] }),
+                    imgURL: getURL(req) + place.imgURL,
+                })),
             });
         })
         .catch((error) => next(error));
@@ -33,7 +36,10 @@ export const getPlace = (req: Request<{ placeId: string }>, res: Response, next:
 
             res.status(200).json({
                 message: 'place fetched successfully!',
-                place: place.toObject(),
+                place: {
+                    ...place.toObject(),
+                    imgURL: getURL(req) + place.imgURL,
+                },
             });
         })
         .catch((error) => next(error));
@@ -54,7 +60,6 @@ export const createPlace = async (req: Request<any, any, PlaceI>, res: Response,
 
         const { address } = req.body;
         const location = await getLocationForAddress(address);
-        const imgURL = getURL(req) + imgPath;
 
         const creator = req.user?.id;
 
@@ -65,7 +70,7 @@ export const createPlace = async (req: Request<any, any, PlaceI>, res: Response,
         const place = new Place({
             ...req.body,
             location,
-            imgURL,
+            imgURL: imgPath,
             creator,
         });
 
@@ -73,7 +78,10 @@ export const createPlace = async (req: Request<any, any, PlaceI>, res: Response,
 
         res.status(201).json({
             message: 'place created successfully!',
-            place: addedPlace,
+            place: {
+                ...addedPlace,
+                imgURL: getURL(req) + addedPlace.imgURL,
+            },
         });
     } catch (error) {
         next(error);
@@ -101,7 +109,6 @@ export const updatePlace = async (
         const { placeId } = req.params;
         const { address, description, title } = req.body;
         let location = await getLocationForAddress(address);
-        const newImgURL = newImgPath ? getURL(req) + newImgPath : '';
 
         const creator = req.user?.id;
 
@@ -124,15 +131,18 @@ export const updatePlace = async (
         place.address = address;
         place.location = location;
 
-        if (newImgURL) {
-            crtImgPath = getPathFromURL(place.imgURL);
-            place.imgURL = newImgURL;
+        if (newImgPath) {
+            crtImgPath = place.imgURL;
+            place.imgURL = newImgPath;
         }
 
         place.save().then((place) => {
             res.status(200).json({
                 message: 'place updated successfully!',
-                place: place.toObject(),
+                place: {
+                    ...place.toObject(),
+                    imgURL: getURL(req) + place.imgURL,
+                },
             });
 
             if (crtImgPath) {
@@ -169,7 +179,7 @@ export const deletePLace = (req: Request<{ placeId: string }>, res: Response, ne
                 throw new ResponseError("you're not allowed to delete this place!", 403);
             }
 
-            imgURL = getPathFromURL(place.imgURL);
+            imgURL = place.imgURL;
 
             return place.rmv(); // rmv => remove
         })

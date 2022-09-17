@@ -3,6 +3,7 @@ import { Router } from 'express';
 import ResponseError from '../models/response-error';
 import { tokenChecker } from '../middlewares/token-checker-middleware';
 import { refreshToken } from '../utilities/token-utility';
+import { getURL } from '../utilities/path-utility';
 import User from '../models/user-model';
 
 const router = Router();
@@ -23,7 +24,10 @@ router.post('/refresh', tokenChecker(true), (req, res, next) => {
 
             res.status(200).json({
                 message: 'refreshed successfully!',
-                user: user.toObject({ virtuals: ['id'] }),
+                user: {
+                    ...user.toObject({ virtuals: ['id'] }),
+                    imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                },
                 token,
             });
         })

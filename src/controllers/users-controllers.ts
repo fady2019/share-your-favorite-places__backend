@@ -10,18 +10,22 @@ import {
     UserDeleteAccount,
 } from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
-import { getPathFromURL, getURL } from '../utilities/path-utility';
+import { getURL } from '../utilities/path-utility';
 import { generateToken, updateTokenPayload } from '../utilities/token-utility';
 import { deleteFile } from '../utilities/file-utility';
 
-export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
+export const getUsers = (req: Request, res: Response, next: NextFunction) => {
     User.find()
         .select('name imgURL places _id')
         .exec()
         .then((users) => {
             res.status(200).json({
                 message: 'users fetched successfully!',
-                users: users.map((user) => ({ ...user.toObject(), places: undefined })),
+                users: users.map((user) => ({
+                    ...user.toObject(),
+                    imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                    places: undefined,
+                })),
             });
         })
         .catch((error) => next(error));
@@ -65,7 +69,10 @@ export const postLogin = (req: Request<any, any, UserAuthI>, res: Response, next
 
             res.status(200).json({
                 message: 'user logged in successfully!',
-                user,
+                user: {
+                    ...user,
+                    imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                },
                 token,
             });
         })
@@ -117,7 +124,10 @@ export const changeEmail = (req: Request<any, any, UserChangeEmailI>, res: Respo
 
             res.status(200).json({
                 message: 'user email changed successfully!',
-                user,
+                user: {
+                    ...user,
+                    imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                },
                 token,
             });
         })
@@ -144,7 +154,10 @@ export const changePassword = (
         .then((user) => {
             res.status(200).json({
                 message: 'user password changed successfully!',
-                user,
+                user: {
+                    ...user,
+                    imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                },
             });
         })
         .catch((error) => next(error));
@@ -166,7 +179,10 @@ export const changeName = (req: Request<any, any, UserChangeNameI>, res: Respons
         .then((user) => {
             res.status(200).json({
                 message: 'user name changed successfully!',
-                user,
+                user: {
+                    ...user,
+                    imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                },
             });
         })
         .catch((error) => next(error));
@@ -190,20 +206,23 @@ export const changeAvatar = (isImageRequired: boolean) => {
             throw new ResponseError("can't get user id!", 401);
         }
 
-        const imgURL = imgPath ? getURL(req) + imgPath : undefined;
+        const imgURL = imgPath || undefined;
 
         User.changeUserAvatar(userId, imgURL)
             .then(([user, prevImgURL]) => {
                 res.status(200).json({
                     message: 'user avatar changed successfully!',
-                    user,
+                    user: {
+                        ...user,
+                        imgURL: user.imgURL ? getURL(req) + user.imgURL : undefined,
+                    },
                 });
 
                 if (!prevImgURL) {
                     return;
                 }
 
-                const prevImgPath = getPathFromURL(prevImgURL);
+                const prevImgPath = prevImgURL;
 
                 if (prevImgPath) {
                     deleteFile(prevImgPath);
