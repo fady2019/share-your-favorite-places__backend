@@ -176,6 +176,7 @@ export const deletePLace = (req: Request<{ placeId: string }>, res: Response, ne
         .then(() => {
             res.status(200).json({
                 message: 'place deleted successfully!',
+                placeId,
             });
 
             deleteFile(imgURL);
