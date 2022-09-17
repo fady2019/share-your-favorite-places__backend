@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import {
+    changeAvatar,
     changeEmail,
     changeName,
     changePassword,
@@ -18,6 +19,7 @@ import {
 } from '../validators/user-validator';
 
 import { tokenChecker } from '../middlewares/token-checker-middleware';
+import { imageUploader } from '../middlewares/image-uploader-middleware';
 
 const router = Router();
 
@@ -52,6 +54,16 @@ router.patch('/change/password', userChangePasswordValidator, changePassword);
 // change user name
 // Need Authentication
 router.patch('/change/name', userChangeNameValidator, changeName);
+
+// PATCH /users/change/avatar
+// change user avatar
+// Need Authentication
+router.patch('/change/avatar', imageUploader('avatar').single('image'), changeAvatar(true));
+
+// DELETE /users/reset/avatar
+// reset user avatar
+// Need Authentication
+router.delete('/reset/avatar', changeAvatar(false));
 
 // POST /users/delete
 // delete a user account
