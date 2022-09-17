@@ -11,7 +11,7 @@ import {
 } from '../models/user-interfaces';
 import { inputValidationResult } from '../utilities/input-validation-result-utility';
 import { getPathFromURL, getURL } from '../utilities/path-utility';
-import { generateToken } from '../utilities/token-utility';
+import { generateToken, updateTokenPayload } from '../utilities/token-utility';
 import { deleteFile } from '../utilities/file-utility';
 
 export const getUsers = (_req: Request, res: Response, next: NextFunction) => {
@@ -112,9 +112,15 @@ export const changeEmail = (req: Request<any, any, UserChangeEmailI>, res: Respo
 
     User.changeUserEmail(userId, password, newEmail)
         .then((user) => {
+            const token = updateTokenPayload(req.headers.authorization, {
+                id: user._id.toString(),
+                email: user.email,
+            });
+
             res.status(200).json({
                 message: 'user email changed successfully!',
                 user,
+                token,
             });
         })
         .catch((error) => next(error));
