@@ -2,7 +2,7 @@
 
 ## About The Project
 
-This is the backend of Share-Favrite-Places app, also you can find frontend <a href="https://github.com/fady2019/share-your-favorite-places__frontend" target="_blank">here</a>, the idea behind this app is simply sharing your own favorite places with people
+This is the backend of the Share-Favorite-Places app, also you can find the frontend <a href="https://github.com/fady2019/share-your-favorite-places__frontend" target="_blank">here</a>, the idea behind this app is simply sharing your own favorite places with people.
 
 ### Built With
 
