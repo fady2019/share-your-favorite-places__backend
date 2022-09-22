@@ -50,10 +50,10 @@ mongoose
     .connect(process.env.MONGODB_CONNECTION_URI as string, {
         user: process.env.MONGODB_CONNECTION_USERNAME,
         pass: process.env.MONGODB_CONNECTION_PASSWORD,
-        // autoIndex: false, // should be added on production
+        autoIndex: false, // should be added on production
     })
     .then(() => {
-        app.listen(8080);
+        app.listen(process.env.PORT || 8080);
     })
     .catch((error) => {
         console.log(error);
