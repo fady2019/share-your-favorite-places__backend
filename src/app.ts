@@ -4,19 +4,21 @@ import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 
+dotenv.config();
+
 import tokenRoutes from './routes/token-routes';
 import placesRoutes from './routes/places-routes';
 import usersRoutes from './routes/users-routes';
 import ResponseError from './models/response-error';
-
-dotenv.config();
 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use('/media', express.static(path.join(__dirname, '..', path.sep, 'media')));
+const mediaPath = process.env.MEDIA_DIR_PATH as string;
+
+app.use(`/${mediaPath}`, express.static(path.join(__dirname, '..', path.sep, mediaPath)));
 
 app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', process.env.ACCESS_CONTROL_ALLOW_ORIGIN as string);

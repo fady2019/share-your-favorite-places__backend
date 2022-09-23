@@ -15,7 +15,7 @@ export const imageUploader = (imgPath: string) => {
                     return callback(new ResponseError('user id is required!', 422), '');
                 }
 
-                const mediaPath = path.join('media', userId, 'images', imgPath);
+                const mediaPath = path.join(process.env.MEDIA_DIR_PATH as string, userId, 'images', imgPath);
                 const destPath = path.join(rootPath, mediaPath);
 
                 fs.mkdir(destPath, { recursive: true }, (error) => {

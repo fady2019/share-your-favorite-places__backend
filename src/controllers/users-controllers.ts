@@ -98,7 +98,7 @@ export const deleteAccount = (
                 message: 'user account deleted successfully!',
             });
 
-            deleteFile('/media/' + userId);
+            deleteFile(`${process.env.MEDIA_DIR_PATH}/` + userId);
         })
         .catch((error) => next(error));
 };

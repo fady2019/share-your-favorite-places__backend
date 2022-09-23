@@ -2,15 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { NextFunction } from 'express';
 
-import { rootPath } from './path-utility';
+import { getPathParts, rootPath } from './path-utility';
 
-const deletableDirs = ['media'];
+const mediaPath = process.env.MEDIA_DIR_PATH as string;
+const mediaPathPrefix = getPathParts(mediaPath)[0];
+const deletableDirs = [mediaPathPrefix];
 
 export const deleteFile = (filePath: string, next?: NextFunction) => {
-    const filePathParts = path
-        .normalize(filePath)
-        .split(path.sep)
-        .filter((part) => part.trim() !== '');
+    const filePathParts = getPathParts(filePath);
 
     const filePathPrefix = filePathParts[0];
 
